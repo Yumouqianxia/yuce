@@ -1,0 +1,121 @@
+services:
+  # MySQL数据库
+  mysql:
+    image: mysql:8.0
+    container_name: yuce-mysql
+    restart: unless-stopped
+    profiles:
+      - local
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-prediction_system}
+      MYSQL_USER: ${MYSQL_USER:-prediction}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-prediction123}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend-go/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - yuce-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 40s
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: yuce-redis
+    restart: unless-stopped
+    profiles:
+      - local
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123456}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - yuce-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      timeout: 3s
+      retries: 5
+      interval: 10s
+
+  # Go后端服务
+  backend:
+    build:
+      context: ./backend-go
+      dockerfile: Dockerfile
+    container_name: yuce-backend
+    restart: unless-stopped
+    environment:
+      # 数据库配置
+      BACKEND_DATABASE_HOST: ${DB_HOST:-mysql}
+      BACKEND_DATABASE_PORT: ${DB_PORT:-3306}
+      BACKEND_DATABASE_DATABASE: ${DB_NAME:-prediction_system}
+      BACKEND_DATABASE_USERNAME: ${DB_USER:-prediction}
+      BACKEND_DATABASE_PASSWORD: ${DB_PASSWORD:-prediction123}
+      
+      # Redis配置
+      BACKEND_REDIS_HOST: ${REDIS_HOST:-redis}
+      BACKEND_REDIS_PORT: ${REDIS_PORT:-6379}
+      BACKEND_REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123456}
+      
+      # 应用配置
+      BACKEND_AUTH_JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production-12345678}
+      BACKEND_LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "1874:8080"
+    networks:
+      - yuce-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      timeout: 10s
+      retries: 3
+      interval: 30s
+
+  # Vue前端服务
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: yuce-frontend
+    restart: unless-stopped
+    ports:
+      - "5408:8080"  # 你设计的5408端口
+    networks:
+      - yuce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      timeout: 10s
+      retries: 3
+      interval: 30s
+
+  # 数据库管理工具（可选）
+  adminer:
+    image: adminer:4.8.1
+    container_name: yuce-adminer
+    restart: unless-stopped
+    profiles:
+      - local
+    ports:
+      - "8082:8080"
+    networks:
+      - yuce-network
+    depends_on:
+      - mysql
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  yuce-network:
+    driver: bridge

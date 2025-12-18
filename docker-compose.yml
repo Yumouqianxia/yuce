@@ -1,0 +1,124 @@
+services:
+  # MySQL数据库
+  mysql:
+    image: mysql:8.0
+    container_name: prediction-mysql
+    restart: unless-stopped
+    profiles:
+      - local
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-prediction_system}
+      MYSQL_USER: ${MYSQL_USER:-prediction}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-prediction123}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend-go/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - prediction-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 40s
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: prediction-redis
+    restart: unless-stopped
+    profiles:
+      - local
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123456}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - prediction-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      timeout: 3s
+      retries: 5
+      interval: 10s
+
+  # Go后端服务
+  backend:
+    build:
+      context: ./backend-go
+      dockerfile: Dockerfile
+      target: production
+    container_name: prediction-backend
+    restart: unless-stopped
+    entrypoint: ["/app/main"]
+    environment:
+      # 运行环境（后端实际读取 GO_ENV）
+      GO_ENV: production
+
+      # 数据库配置（后端使用 Viper 前缀 BACKEND_）
+      BACKEND_DATABASE_HOST: ${DB_HOST:-mysql}
+      BACKEND_DATABASE_PORT: ${DB_PORT:-3306}
+      BACKEND_DATABASE_DATABASE: ${DB_NAME:-prediction_system}
+      BACKEND_DATABASE_USERNAME: ${DB_USER:-prediction}
+      BACKEND_DATABASE_PASSWORD: ${DB_PASSWORD:-prediction123}
+
+      # Redis 配置
+      BACKEND_REDIS_HOST: ${REDIS_HOST:-redis}
+      BACKEND_REDIS_PORT: ${REDIS_PORT:-6379}
+      BACKEND_REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123456}
+
+      # 应用与日志
+      BACKEND_AUTH_JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      BACKEND_LOG_LEVEL: ${LOG_LEVEL:-info}
+      BACKEND_LOG_FORMAT: json
+    ports:
+      - "1874:8080"
+      - "${WS_PORT:-8081}:8081"
+    volumes:
+      - backend_logs:/app/logs
+      - backend_uploads:/app/uploads
+    networks:
+      - prediction-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+      start_period: 30s
+
+  # Vue前端服务
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: prediction-frontend
+    restart: unless-stopped
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api}
+    ports:
+      - "5408:8080"
+    networks:
+      - prediction-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      timeout: 10s
+      retries: 3
+      interval: 30s
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_logs:
+    driver: local
+  backend_uploads:
+    driver: local
+
+networks:
+  prediction-network:
+    driver: bridge

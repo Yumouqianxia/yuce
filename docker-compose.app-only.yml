@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # Go后端服务 (开发环境 - 连接外部或内置数据库)
+  backend:
+    build:
+      context: ./backend-go
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: prediction-backend-dev
+    restart: unless-stopped
+    environment:
+      # 数据库配置（默认连内置容器，可改为 host.docker.internal 外部实例）
+      DB_HOST: ${DB_HOST:-host.docker.internal}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME:-prediction_system}
+      DB_USER: ${DB_USER:-prediction}
+      DB_PASSWORD: ${DB_PASSWORD:-prediction123}
+      
+      # Redis配置
+      REDIS_HOST: ${REDIS_HOST:-host.docker.internal}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123456}
+      
+      # 应用配置
+      APP_ENV: development
+      APP_PORT: 8080
+      WS_PORT: 8081
+      JWT_SECRET: dev-jwt-secret-key
+      
+      # 日志配置
+      LOG_LEVEL: debug
+      LOG_FORMAT: text
+      
+      # 开发配置
+      GIN_MODE: debug
+      HOT_RELOAD: true
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+      - "2345:2345"  # Delve调试端口
+    volumes:
+      - ./backend-go:/app
+      - backend_dev_logs:/app/logs
+      - backend_dev_uploads:/app/uploads
+    networks:
+      - prediction-app-network
+
+  # Vue前端服务 (开发环境 - 热重载)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: prediction-frontend-dev
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8080}
+      - VITE_WS_BASE_URL=${VITE_WS_BASE_URL:-ws://localhost:8081}
+    ports:
+      - "5173:5173"  # Vite开发服务器端口
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - prediction-app-network
+    depends_on:
+      - backend
+
+volumes:
+  backend_dev_logs:
+    driver: local
+  backend_dev_uploads:
+    driver: local
+
+networks:
+  prediction-app-network:
+    driver: bridge

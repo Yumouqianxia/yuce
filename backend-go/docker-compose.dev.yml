@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # MySQL 数据库 - 开发环境（按需启用）
+  mysql:
+    image: mysql:8.0
+    container_name: prediction-mysql-dev
+    restart: unless-stopped
+    profiles:
+      - local
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-prediction_system}
+      MYSQL_USER: ${MYSQL_USER:-prediction}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-prediction123}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+      - ./scripts/init-dev.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --default-authentication-plugin=mysql_native_password --innodb-buffer-pool-size=128M
+    networks:
+      - prediction-dev-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Redis 缓存 - 开发环境（按需启用）
+  redis:
+    image: redis:6.2-alpine
+    container_name: prediction-redis-dev
+    restart: unless-stopped
+    profiles:
+      - local
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_dev_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD:-redis123456}
+    networks:
+      - prediction-dev-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  mysql_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+
+networks:
+  prediction-dev-network:
+    driver: bridge

@@ -1,0 +1,132 @@
+# golangci-lint v2 配置文件
+version: "2"
+
+run:
+  timeout: 5m
+  go: "1.21"
+  tests: true
+
+output:
+  formats:
+    text:
+      path: stdout
+      color: true
+
+linters:
+  default: none
+  enable:
+    - bodyclose
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    - asasalint
+    - asciicheck
+    - bidichk
+    - contextcheck
+    - durationcheck
+    - errchkjson
+    - errorlint
+    - exhaustive
+    - gocheckcompilerdirectives
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gocyclo
+    - gosec
+    - gosmopolitan
+    - loggercheck
+    - makezero
+    - musttag
+    - nilerr
+    - nilnil
+    - noctx
+    - nolintlint
+    - rowserrcheck
+    - sqlclosecheck
+    - testifylint
+    - unconvert
+    - unparam
+    - wastedassign
+    - whitespace
+
+  settings:
+    govet:
+      enable:
+        - shadow
+    gocyclo:
+      min-complexity: 15
+    dupl:
+      threshold: 100
+    goconst:
+      min-len: 2
+      min-occurrences: 2
+    misspell:
+      locale: US
+    lll:
+      line-length: 140
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+      disabled-checks:
+        - dupImport
+        - ifElseChain
+        - octalLiteral
+        - whyNoLint
+        - wrapperFunc
+    staticcheck:
+      checks:
+        - all
+        - '-SA1000' # 禁用正则表达式检查
+        - '-ST1003' # 禁用驼峰命名检查
+
+  exclusions:
+    paths:
+      - vendor
+      - node_modules
+      - ".*\\.pb\\.go$"
+    rules:
+      - path: '(.+)_test\.go'
+        linters:
+          - gomnd
+          - funlen
+          - goconst
+          - gocyclo
+          - gosec
+      - path: 'cmd/'
+        linters:
+          - gochecknoinits
+      - text: "Error return value of .((os\\.)?std(out|err)\\.|.*Close|.*Flush|os\\.Remove(All)?|.*printf?|os\\.(Un)?Setenv). is not checked"
+        linters:
+          - errcheck
+      - text: "func name will be used as test\\.Test.* by other packages, and that stutters; consider calling this"
+        linters:
+          - staticcheck
+      - text: "(possible misuse of unsafe.Pointer|should have signature)"
+        linters:
+          - govet
+      - text: "ineffective break statement. Did you mean to break out of the outer loop"
+        linters:
+          - staticcheck
+
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - goimports
+
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(backend-go)
+    goimports:
+      local-prefixes: backend-go

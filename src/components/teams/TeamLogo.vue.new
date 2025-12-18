@@ -1,0 +1,113 @@
+<template>
+  <div class="team-logo" :class="size">
+    <img v-if="logoUrl" :src="logoUrl" :alt="teamName" class="team-logo-img">
+    <span v-else class="team-initial">{{ initial }}</span>
+  </div>
+</template>
+
+<script setup>
+import { computed, ref, onMounted } from 'vue';
+
+const props = defineProps({
+  teamName: {
+    type: String,
+    required: true
+  },
+  size: {
+    type: String,
+    default: 'medium' // small, medium, large
+  }
+});
+
+// 获取队伍首字母
+const initial = computed(() => {
+  return props.teamName ? props.teamName.charAt(0).toUpperCase() : 'T';
+});
+
+// 战队全称到图片名称的映射
+const teamToImageMap = {
+  '北京JDG': 'JDG',
+  '深圳DYG': 'DYG',
+  'Hero久竞': 'HERO',
+  '西安WE': 'WE',
+  '上海EDG.M': 'EDG',
+  '武汉eStarPro': 'ESTAR',
+  '上海RNG.M': 'RNG',
+  '长沙TES.A': 'TES.A',
+  '广州TTG': 'TTG',
+  '佛山DRG': 'DRG',
+  '苏州KSG': 'KSG',
+  '重庆狼队': 'WOLVES',
+  '杭州NBW': 'LGD',
+  '济南RW侠': 'RW',
+  '北京WB': 'WB',
+  '成都AG超玩会': 'AG'
+};
+
+// 图片URL
+const logoUrl = ref('');
+
+// 在组件挂载后加载图片
+onMounted(async () => {
+  if (!props.teamName) return;
+  
+  const imageName = teamToImageMap[props.teamName] || props.teamName;
+  
+  try {
+    // 尝试直接使用相对路径
+    logoUrl.value = `./assets/teams/${imageName}.jpg`;
+  } catch (error) {
+    console.error('加载图片失败:', error);
+    logoUrl.value = '';
+  }
+});
+</script>
+
+<style scoped>
+.team-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+}
+
+.team-logo.small {
+  width: 32px;
+  height: 32px;
+}
+
+.team-logo.medium {
+  width: 48px;
+  height: 48px;
+}
+
+.team-logo.large {
+  width: 64px;
+  height: 64px;
+}
+
+.team-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.team-initial {
+  font-weight: bold;
+  color: white;
+}
+
+.team-initial.small {
+  font-size: 16px;
+}
+
+.team-initial.medium {
+  font-size: 22px;
+}
+
+.team-initial.large {
+  font-size: 28px;
+}
+</style>

@@ -1,0 +1,121 @@
+version: '3.8'
+
+# 1Panel 专用 Docker Compose 配置
+# 适配1Panel的网络和存储管理
+
+services:
+  # MySQL数据库
+  mysql:
+    image: mysql:8.0
+    container_name: prediction-mysql
+    restart: unless-stopped
+    profiles:
+      - local
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-prediction_system}
+      MYSQL_USER: ${MYSQL_USER:-prediction}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-prediction123}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend-go/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - 1panel-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 40s
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: prediction-redis
+    restart: unless-stopped
+    profiles:
+      - local
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123456}
+    volumes:
+      - redis_data:/data
+    networks:
+      - 1panel-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      timeout: 3s
+      retries: 5
+      interval: 10s
+
+  # Go后端服务
+  backend:
+    build:
+      context: ./backend-go
+      dockerfile: Dockerfile
+      target: production
+    container_name: prediction-backend
+    restart: unless-stopped
+    environment:
+      # 数据库配置
+      DB_HOST: ${DB_HOST:-mysql}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME:-prediction_system}
+      DB_USER: ${DB_USER:-prediction}
+      DB_PASSWORD: ${DB_PASSWORD:-prediction123}
+      
+      # Redis配置
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123456}
+      
+      # 应用配置
+      APP_ENV: ${APP_ENV:-production}
+      APP_PORT: ${APP_PORT:-8080}
+      WS_PORT: ${WS_PORT:-8081}
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      
+      # 日志配置
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FORMAT: json
+    volumes:
+      - backend_logs:/app/logs
+      - backend_uploads:/app/uploads
+    networks:
+      - 1panel-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+      start_period: 30s
+
+  # Vue前端服务
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: prediction-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-80}:8080"
+    networks:
+      - 1panel-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      timeout: 10s
+      retries: 3
+      interval: 30s
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_logs:
+    driver: local
+  backend_uploads:
+    driver: local
+
+networks:
+  1panel-network:
+    driver: bridge

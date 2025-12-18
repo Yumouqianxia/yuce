@@ -1,0 +1,101 @@
+version: "3.8"
+
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: prediction-mysql
+    restart: unless-stopped
+    profiles:
+      - local
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-prediction_system}
+      MYSQL_USER: ${MYSQL_USER:-prediction}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-prediction123}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - prediction-network
+
+  # Redis 缓存
+  redis:
+    image: redis:6.2-alpine
+    container_name: prediction-redis
+    restart: unless-stopped
+    profiles:
+      - local
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123456}
+    networks:
+      - prediction-network
+
+  # Go 后端 API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: prediction-api
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      - BACKEND_DATABASE_HOST=${DB_HOST:-mysql}
+      - BACKEND_DATABASE_PORT=${DB_PORT:-3306}
+      - BACKEND_DATABASE_USERNAME=${DB_USER:-prediction}
+      - BACKEND_DATABASE_PASSWORD=${DB_PASSWORD:-prediction123}
+      - BACKEND_DATABASE_DATABASE=${DB_NAME:-prediction_system}
+      - BACKEND_REDIS_HOST=${REDIS_HOST:-redis}
+      - BACKEND_REDIS_PORT=${REDIS_PORT:-6379}
+      - BACKEND_REDIS_PASSWORD=${REDIS_PASSWORD:-redis123456}
+      - BACKEND_AUTH_JWT_SECRET=your-super-secret-jwt-key-change-in-production-12345678
+      - BACKEND_LOG_LEVEL=${LOG_LEVEL:-info}
+    networks:
+      - prediction-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx 反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: prediction-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deployments/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./deployments/nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - api
+    networks:
+      - prediction-network
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  prediction-network:
+    driver: bridge

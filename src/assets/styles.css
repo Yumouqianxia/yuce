@@ -1,0 +1,209 @@
+/* Element Plus 全局样式覆盖 */
+
+/* 分页组件文字化 */
+.el-pagination .el-pagination__sizes .el-select .el-input .el-select__caret,
+.el-pagination button i,
+.el-pagination .btn-prev i,
+.el-pagination .btn-next i,
+.el-pagination .arrow-up,
+.el-pagination .arrow-down {
+  display: none !important;
+}
+
+/* 替换上一页/下一页为文字 */
+.el-pagination button.btn-prev::before {
+  content: "上一页";
+  font-size: 14px;
+}
+
+.el-pagination button.btn-next::before {
+  content: "下一页";
+  font-size: 14px;
+}
+
+/* 控制分页按钮大小 */
+.el-pagination .btn-prev,
+.el-pagination .btn-next {
+  min-width: 60px;
+  padding: 0 5px;
+  border: 1px solid #dcdfe6;
+  background: #fff;
+  border-radius: 4px;
+  height: 32px;
+  line-height: 32px;
+}
+
+/* 表格展开图标文字化 */
+.el-table .el-table__row .el-table__expand-icon {
+  transform: none !important;
+}
+
+.el-table .el-table__row .el-table__expand-icon .el-icon {
+  display: none;
+}
+
+.el-table .el-table__row .el-table__expand-icon::before {
+  content: "展开";
+  font-size: 12px;
+}
+
+.el-table .el-table__row .el-table__expand-icon--expanded::before {
+  content: "收起";
+}
+
+/* 表格滚动按钮文字化 */
+.el-table__body-wrapper .el-scrollbar__bar .increase,
+.el-table__body-wrapper .el-scrollbar__bar .decrease {
+  display: none;
+}
+
+.el-table__body-wrapper .el-scrollbar__bar.is-horizontal .el-scrollbar__thumb::before {
+  content: "< >";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.el-table__body-wrapper .el-scrollbar__bar.is-vertical .el-scrollbar__thumb::before {
+  content: "^";
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+}
+
+.el-table__body-wrapper .el-scrollbar__bar.is-vertical .el-scrollbar__thumb::after {
+  content: "v";
+  position: absolute;
+  bottom: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+}
+
+/* 所有下拉箭头图标大小限制和替换 */
+.el-select-dropdown__item i.el-icon,
+.el-select .el-input__suffix i.el-icon,
+.el-dropdown i.el-icon,
+.el-cascader i.el-icon {
+  font-size: 14px !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* 下拉菜单箭头文本化 */
+.el-select .el-input .el-select__caret {
+  transform: none !important;
+}
+.el-select .el-input .el-select__caret.is-reverse {
+  transform: none !important;
+}
+.el-select .el-input .el-select__caret::before {
+  content: "▼";
+  font-size: 12px;
+}
+.el-select .el-input .el-select__caret.is-reverse::before {
+  content: "▲";
+}
+
+/* 限制所有SVG图标大小 */
+svg.icon {
+  max-width: 16px !important;
+  max-height: 16px !important;
+  width: 1em !important;
+  height: 1em !important;
+}
+
+/* 表格的展开列处理 */
+.el-table .el-table__expand-column .cell {
+  padding: 0;
+  text-align: center;
+}
+
+.el-table .el-table__expand-column .cell .el-table__expand-icon {
+  display: inline-block;
+  width: auto;
+  height: auto;
+  transform: none !important;
+  padding: 0;
+}
+
+.el-table .el-table__expand-column .cell .el-table__expand-icon svg {
+  display: none;
+}
+
+.el-table .el-table__expand-column .cell .el-table__expand-icon::before {
+  content: "展开";
+  font-size: 12px;
+  color: #409eff;
+  cursor: pointer;
+}
+
+.el-table .el-table__expand-column .cell .el-table__expand-icon--expanded::before {
+  content: "收起";
+}
+
+/* 隐藏表格中所有的巨大下拉箭头 */
+.el-table .sort-caret {
+  display: none !important;
+}
+
+/* 去掉所有可能的巨大SVG图标 */
+svg[height="100%"], svg[width="100%"] {
+  height: 16px !important;
+  width: 16px !important;
+  max-height: 16px !important;
+  max-width: 16px !important;
+}
+
+/* 隐藏所有页面中的下拉箭头SVG */
+.el-collapse-item__arrow,
+.el-select__icon,
+.el-input__icon,
+.el-tree-node__expand-icon,
+.el-cascader__arrow,
+.el-submenu__icon-arrow,
+.el-icon-arrow-down,
+.el-icon-arrow-up,
+.el-icon-arrow-right,
+.el-icon-arrow-left {
+  display: none !important;
+}
+
+/* 彻底删除所有SVG图标 - 强制措施 */
+svg {
+  max-width: 16px !important;
+  max-height: 16px !important;
+  display: none !important;
+}
+
+/* 移除所有箭头相关的元素 */
+[class*="arrow"],
+[class*="caret"],
+[class*="dropdown"] > i,
+[class*="icon"],
+.sort-icon,
+.el-table__expand-icon {
+  display: none !important;
+}
+
+/* 替换表格排序为文字 */
+.el-table th.is-sortable .cell::after {
+  content: " [排序]";
+  font-size: 12px;
+  color: #909399;
+}
+
+/* 替换下拉菜单为文字提示 */
+.el-select .el-input::after {
+  content: " ▼";
+  font-size: 12px;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+} 

@@ -1,0 +1,95 @@
+# 排除不必要的目录和文件，减少Docker构建上下文大小
+
+# 旧的后端目录
+backend-old/
+
+# Node.js依赖
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 构建输出
+dist/
+build/
+.output/
+.nuxt/
+.next/
+.svelte-kit/
+
+# 环境文件
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE和编辑器文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 操作系统文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git相关
+.git/
+.gitignore
+
+# 日志文件
+*.log
+logs/
+
+# 临时文件
+tmp/
+temp/
+.tmp/
+.temp/
+
+# 缓存文件
+.cache/
+.parcel-cache/
+.eslintcache
+
+# 测试覆盖率
+coverage/
+.nyc_output/
+
+# 文档和说明文件
+*.md
+!README.md
+
+# 脚本文件（除了必要的）
+scripts/
+!scripts/start*.sh
+
+# 配置文件
+.eslintrc.*
+.prettierrc.*
+tsconfig.tsbuildinfo
+
+# 部署相关
+deployment-strategy.md
+DEPLOYMENT.md
+1PANEL_DEPLOYMENT.md
+1panel-compose.yml
+1panel.env
+
+# Docker相关
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# 其他不需要的文件
+*.exe
+*.sqlite
+*.db

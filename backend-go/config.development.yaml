@@ -1,0 +1,142 @@
+{
+  "Auth": {
+    "BcryptCost": 10,
+    "JWTExpirationHours": 0,
+    "JWTSecret": "",
+    "LockoutDuration": 0,
+    "MaxLoginAttempts": 0,
+    "PasswordPolicy": {
+      "MinLength": 0,
+      "RequireLower": false,
+      "RequireNumber": false,
+      "RequireSpecial": false,
+      "RequireUpper": false
+    },
+    "RefreshTokenExpDays": 0,
+    "SessionTimeout": 0
+  },
+  "Database": {
+    "Charset": "utf8mb4",
+    "Collation": "utf8mb4_unicode_ci",
+    "ConnMaxIdleTime": 0,
+    "ConnMaxLifetime": 0,
+    "Database": "prediction_system",
+    "Host": "localhost",
+    "MaxIdleConns": 5,
+    "MaxOpenConns": 10,
+    "Migration": {
+      "AutoCreate": false,
+      "Enabled": true,
+      "Path": "./migrations"
+    },
+    "Password": "",
+    "Port": 3306,
+    "SSL": {
+      "CAFile": "",
+      "CertFile": "",
+      "KeyFile": "",
+      "Mode": "disable"
+    },
+    "Username": "root"
+  },
+  "External": {
+    "Email": {
+      "Enabled": false,
+      "From": "noreply@yourdomain.com",
+      "Host": "smtp.gmail.com",
+      "Password": "",
+      "Port": 587,
+      "Provider": "smtp",
+      "TLS": true,
+      "Username": ""
+    },
+    "FileStorage": {
+      "AllowedExt": null,
+      "LocalPath": "",
+      "MaxSize": 0,
+      "Provider": "",
+      "S3Config": {
+        "AccessKey": "",
+        "Bucket": "",
+        "Endpoint": "",
+        "Region": "",
+        "SecretKey": "",
+        "UseSSL": false
+      }
+    },
+    "Monitoring": {
+      "Enabled": false,
+      "MetricsURL": "",
+      "SampleRate": 0,
+      "TracingURL": ""
+    }
+  },
+  "Features": {
+    "CORSConfig": {
+      "AllowCredentials": false,
+      "AllowedHeaders": null,
+      "AllowedMethods": null,
+      "AllowedOrigins": null,
+      "ExposedHeaders": null,
+      "MaxAge": 0
+    },
+    "CacheLeaderboard": false,
+    "CacheMatchData": false,
+    "EnableCORS": false,
+    "EnableGracefulShutdown": false,
+    "EnableHealthCheck": false,
+    "EnableMetrics": false,
+    "EnablePprof": true,
+    "EnableRateLimit": false,
+    "EnableSwagger": true,
+    "RateLimitConfig": {
+      "BurstSize": 0,
+      "CleanupInterval": 0,
+      "RequestsPerSecond": 0,
+      "WindowSize": 0
+    }
+  },
+  "Log": {
+    "Compress": true,
+    "Format": "text",
+    "Level": "debug",
+    "LocalTime": false,
+    "MaxAge": 0,
+    "MaxBackups": 0,
+    "MaxSize": 0,
+    "Output": "stdout"
+  },
+  "Redis": {
+    "Cluster": {
+      "Addresses": [],
+      "Enabled": false
+    },
+    "Database": 0,
+    "DialTimeout": 0,
+    "Host": "localhost",
+    "IdleCheckFreq": 0,
+    "IdleTimeout": 0,
+    "MaxConnAge": 0,
+    "MaxRetries": 0,
+    "MinIdleConns": 2,
+    "Password": "",
+    "PoolSize": 5,
+    "PoolTimeout": 0,
+    "Port": 6379,
+    "ReadTimeout": 0,
+    "WriteTimeout": 0
+  },
+  "Server": {
+    "Host": "localhost",
+    "IdleTimeout": 0,
+    "Mode": "debug",
+    "Port": 8080,
+    "ReadTimeout": 0,
+    "TLS": {
+      "CertFile": "",
+      "Enabled": false,
+      "KeyFile": ""
+    },
+    "WriteTimeout": 0
+  },
+}

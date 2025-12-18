@@ -1,0 +1,169 @@
+# 预测系统后端配置文件
+
+server:
+  host: "0.0.0.0"
+  port: 8080
+  read_timeout: "30s"
+  write_timeout: "30s"
+  idle_timeout: "120s"
+  mode: "release"
+  tls:
+    enabled: false
+    cert_file: ""
+    key_file: ""
+
+database:
+  host: "localhost"
+  port: 3306
+  username: "root"
+  password: ""
+  database: "prediction_system"
+  charset: "utf8mb4"
+  collation: "utf8mb4_unicode_ci"
+  max_open_conns: 20
+  max_idle_conns: 10
+  conn_max_lifetime: "1h"
+  conn_max_idle_time: "30m"
+  ssl:
+    mode: "disable"
+    cert_file: ""
+    key_file: ""
+    ca_file: ""
+  migration:
+    enabled: true
+    auto_create: false
+    path: "./migrations"
+
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+  database: 0
+  pool_size: 10
+  min_idle_conns: 5
+  max_retries: 3
+  dial_timeout: "5s"
+  read_timeout: "3s"
+  write_timeout: "3s"
+  pool_timeout: "4s"
+  idle_timeout: "5m"
+  max_conn_age: "30m"
+  idle_check_freq: "1m"
+  cluster:
+    enabled: false
+    addresses: []
+
+auth:
+  jwt_secret: "your-jwt-secret-key-change-this-in-production-must-be-at-least-32-characters"
+  jwt_expiration_hours: 24
+  refresh_token_exp_days: 30
+  bcrypt_cost: 12
+  session_timeout: "24h"
+  max_login_attempts: 5
+  lockout_duration: "15m"
+  password_policy:
+    min_length: 8
+    require_upper: true
+    require_lower: true
+    require_number: true
+    require_special: false
+
+log:
+  level: "info"
+  format: "json"
+  output: "stdout"
+  max_size: 100
+  max_backups: 3
+  max_age: 28
+  compress: true
+  local_time: true
+
+websocket:
+  host: "0.0.0.0"
+  port: 8081
+  path: "/ws"
+  read_buffer_size: 1024
+  write_buffer_size: 1024
+  max_message_size: 512
+  ping_period: "54s"
+  pong_wait: "60s"
+  write_wait: "10s"
+  max_connections: 1000
+  enable_compression: true
+  check_origin: true
+  allowed_origins:
+    - "http://localhost:3000"
+    - "https://yourdomain.com"
+
+features:
+  enable_swagger: false
+  enable_pprof: false
+  enable_metrics: true
+  enable_cors: true
+  enable_rate_limit: true
+  enable_health_check: true
+  enable_graceful_shutdown: true
+  cache_leaderboard: true
+  cache_match_data: true
+  rate_limit:
+    requests_per_second: 100
+    burst_size: 200
+    window_size: "1m"
+    cleanup_interval: "5m"
+  cors:
+    allowed_origins:
+      - "http://localhost:3000"
+      - "https://yourdomain.com"
+    allowed_methods:
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "DELETE"
+      - "OPTIONS"
+    allowed_headers:
+      - "Content-Type"
+      - "Authorization"
+      - "X-Requested-With"
+    exposed_headers: []
+    allow_credentials: true
+    max_age: "12h"
+
+cache:
+  leaderboard:
+    cache_expiration: "5m"      # 5分钟缓存过期时间
+    refresh_interval: "2m"      # 2分钟定时刷新间隔
+  monitoring:
+    monitor_interval: "1m"      # 1分钟监控检查间隔
+    hit_rate_threshold: 90.0    # 90%命中率阈值
+
+external:
+  email:
+    enabled: false
+    provider: "smtp"
+    host: "smtp.gmail.com"
+    port: 587
+    username: ""
+    password: ""
+    from: "noreply@yourdomain.com"
+    tls: true
+  file_storage:
+    provider: "local"
+    local_path: "./uploads"
+    max_size: 10485760  # 10MB
+    allowed_ext:
+      - ".jpg"
+      - ".jpeg"
+      - ".png"
+      - ".gif"
+    s3:
+      region: ""
+      bucket: ""
+      access_key: ""
+      secret_key: ""
+      endpoint: ""
+      use_ssl: true
+  monitoring:
+    enabled: false
+    metrics_url: ""
+    tracing_url: ""
+    sample_rate: 0.1

@@ -1,0 +1,24 @@
+# ==================== Development Stage ====================
+FROM node:20-alpine AS development
+
+# 安装开发工具和pnpm
+RUN apk add --no-cache git curl
+RUN npm install -g pnpm
+
+# 设置工作目录
+WORKDIR /app
+
+# 复制package文件和pnpm相关文件
+COPY package*.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# 安装所有依赖（包括开发依赖）
+RUN pnpm install
+
+# 复制源代码
+COPY . .
+
+# 暴露Vite开发服务器端口
+EXPOSE 5173
+
+# 启动开发服务器
+CMD ["pnpm", "run", "dev", "--", "--host", "0.0.0.0"]

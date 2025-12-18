@@ -1,0 +1,3035 @@
+basePath: /api/v1
+definitions:
+  domain.Match:
+    properties:
+      created_at:
+        description: Record creation timestamp
+        type: string
+      id:
+        description: Unique identifier
+        type: integer
+      predictions:
+        description: Associations
+        items:
+          $ref: '#/definitions/domain.Prediction'
+        type: array
+      score_a:
+        description: Team A final score
+        type: integer
+      score_b:
+        description: Team B final score
+        type: integer
+      start_time:
+        description: Scheduled start time
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/domain.MatchStatus'
+        description: Current match status
+      team_a:
+        description: First team name
+        type: string
+      team_b:
+        description: Second team name
+        type: string
+      tournament:
+        allOf:
+        - $ref: '#/definitions/domain.Tournament'
+        description: Tournament type
+      updated_at:
+        description: Record last update timestamp
+        type: string
+      winner:
+        description: Winner identifier ('A', 'B', or empty)
+        type: string
+    type: object
+  domain.MatchStatus:
+    enum:
+    - UPCOMING
+    - LIVE
+    - FINISHED
+    - CANCELLED
+    type: string
+    x-enum-comments:
+      MatchStatusCancelled: Match was cancelled before completion
+      MatchStatusFinished: Match has completed with results
+      MatchStatusLive: Match is currently in progress
+      MatchStatusUpcoming: Match is scheduled but not started
+    x-enum-descriptions:
+    - Match is scheduled but not started
+    - Match is currently in progress
+    - Match has completed with results
+    - Match was cancelled before completion
+    x-enum-varnames:
+    - MatchStatusUpcoming
+    - MatchStatusLive
+    - MatchStatusFinished
+    - MatchStatusCancelled
+  domain.ModificationType:
+    enum:
+    - winner
+    - score
+    - both
+    type: string
+    x-enum-varnames:
+    - ModificationWinner
+    - ModificationScore
+    - ModificationBoth
+  domain.Prediction:
+    properties:
+      created_at:
+        type: string
+      earned_points:
+        type: integer
+      has_user_voted:
+        type: boolean
+      id:
+        type: integer
+      is_correct:
+        type: boolean
+      is_featured:
+        type: boolean
+      is_processed:
+        type: boolean
+      is_verified:
+        type: boolean
+      last_modified_at:
+        type: string
+      match:
+        $ref: '#/definitions/domain.Match'
+      match_id:
+        type: integer
+      modification_count:
+        type: integer
+      modifications:
+        items:
+          $ref: '#/definitions/domain.PredictionModification'
+        type: array
+      predicted_score_a:
+        type: integer
+      predicted_score_b:
+        type: integer
+      predicted_winner:
+        description: '''A'' 或 ''B'''
+        type: string
+      updated_at:
+        type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/user.User'
+        description: 关联关系
+      user_id:
+        type: integer
+      vote_count:
+        description: 虚拟字段（不存储在数据库中）
+        type: integer
+    type: object
+  domain.PredictionModification:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      match:
+        $ref: '#/definitions/domain.Match'
+      match_id:
+        type: integer
+      modification_type:
+        $ref: '#/definitions/domain.ModificationType'
+      new_score:
+        type: string
+      new_winner:
+        type: string
+      original_score:
+        type: string
+      original_winner:
+        type: string
+      prediction:
+        $ref: '#/definitions/domain.Prediction'
+      prediction_id:
+        type: integer
+      user:
+        allOf:
+        - $ref: '#/definitions/user.User'
+        description: 关联关系
+      user_id:
+        type: integer
+    type: object
+  domain.Tournament:
+    enum:
+    - SPRING
+    - SUMMER
+    - WORLDS
+    - SPRING
+    - SUMMER
+    - WORLDS
+    type: string
+    x-enum-comments:
+      TournamentSpring: Spring season tournament
+      TournamentSummer: Summer season tournament
+      TournamentWorlds: World championship tournament
+    x-enum-descriptions:
+    - Spring season tournament
+    - Summer season tournament
+    - World championship tournament
+    x-enum-varnames:
+    - TournamentSpring
+    - TournamentSummer
+    - TournamentWorlds
+  handlers.BatchInvalidateRequest:
+    properties:
+      tournaments:
+        items:
+          type: string
+        type: array
+    required:
+    - tournaments
+    type: object
+  handlers.BatchTriggerRequest:
+    properties:
+      match_ids:
+        items:
+          type: integer
+        type: array
+      rule_id:
+        type: integer
+    required:
+    - match_ids
+    type: object
+  handlers.BatchTriggerResponse:
+    properties:
+      errors:
+        items:
+          type: string
+        type: array
+      failed_count:
+        type: integer
+      success_count:
+        type: integer
+      tasks:
+        items:
+          $ref: '#/definitions/handlers.TriggerPointsCalculationResponse'
+        type: array
+    type: object
+  handlers.CalculateMatchPointsRequest:
+    properties:
+      rule_id:
+        type: integer
+    type: object
+  handlers.HitRateCheckResponse:
+    properties:
+      current_rate:
+        type: number
+      is_healthy:
+        type: boolean
+      stats:
+        $ref: '#/definitions/services.CacheStats'
+      threshold:
+        type: number
+    type: object
+  handlers.LoginRequest:
+    properties:
+      password:
+        example: password123
+        type: string
+      username:
+        example: johndoe
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  handlers.LoginResponse:
+    properties:
+      access_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      expires_in:
+        example: 3600
+        type: integer
+      refresh_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      user:
+        $ref: '#/definitions/handlers.RegisterResponse'
+    type: object
+  handlers.PublishTestEventRequest:
+    properties:
+      event_type:
+        example: user.registered
+        type: string
+      payload:
+        additionalProperties: true
+        type: object
+      user_id:
+        example: 1
+        type: integer
+    required:
+    - event_type
+    - payload
+    - user_id
+    type: object
+  handlers.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    required:
+    - refresh_token
+    type: object
+  handlers.RegisterRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      nickname:
+        example: John Doe
+        maxLength: 50
+        type: string
+      password:
+        example: password123
+        minLength: 6
+        type: string
+      username:
+        example: johndoe
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  handlers.RegisterResponse:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      nickname:
+        example: John Doe
+        type: string
+      points:
+        example: 0
+        type: integer
+      role:
+        example: user
+        type: string
+      username:
+        example: johndoe
+        type: string
+    type: object
+  handlers.ReplayEventsRequest:
+    properties:
+      batch_size:
+        example: 100
+        type: integer
+      delay_between:
+        description: 毫秒
+        example: 1000
+        type: integer
+      dry_run:
+        example: true
+        type: boolean
+      end_time:
+        example: "2024-01-02T00:00:00Z"
+        type: string
+      event_type:
+        example: user.registered
+        type: string
+      start_time:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      user_id:
+        example: 1
+        type: integer
+    required:
+    - end_time
+    - start_time
+    type: object
+  handlers.TriggerPointsCalculationRequest:
+    properties:
+      match_id:
+        type: integer
+      rule_id:
+        type: integer
+    required:
+    - match_id
+    type: object
+  handlers.TriggerPointsCalculationResponse:
+    properties:
+      match_id:
+        type: integer
+      message:
+        type: string
+      status:
+        type: string
+      task_id:
+        type: string
+    type: object
+  leaderboard.LeaderboardEntry:
+    properties:
+      avatar:
+        type: string
+      nickname:
+        type: string
+      points:
+        type: integer
+      rank:
+        type: integer
+      tournament:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+      username:
+        type: string
+    type: object
+  leaderboard.LeaderboardStats:
+    properties:
+      average_score:
+        type: number
+      last_updated:
+        type: string
+      top_score:
+        type: integer
+      total_users:
+        type: integer
+      tournament:
+        type: string
+    type: object
+  leaderboard.UserRankInfo:
+    properties:
+      nickname:
+        type: string
+      points:
+        type: integer
+      points_change:
+        description: 积分变化
+        type: integer
+      rank:
+        type: integer
+      rank_change:
+        description: 排名变化（正数表示上升，负数表示下降）
+        type: integer
+      tournament:
+        type: string
+      user_id:
+        type: integer
+      username:
+        type: string
+    type: object
+  match.CreateMatchRequest:
+    properties:
+      start_time:
+        type: string
+      team_a:
+        maxLength: 100
+        type: string
+      team_b:
+        maxLength: 100
+        type: string
+      tournament:
+        $ref: '#/definitions/match.Tournament'
+    required:
+    - start_time
+    - team_a
+    - team_b
+    - tournament
+    type: object
+  match.Match:
+    properties:
+      created_at:
+        description: Record creation timestamp
+        type: string
+      id:
+        description: Unique identifier
+        type: integer
+      predictions:
+        description: Associations
+        items:
+          $ref: '#/definitions/domain.Prediction'
+        type: array
+      score_a:
+        description: Team A final score
+        type: integer
+      score_b:
+        description: Team B final score
+        type: integer
+      start_time:
+        description: Scheduled start time
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/domain.MatchStatus'
+        description: Current match status
+      team_a:
+        description: First team name
+        type: string
+      team_b:
+        description: Second team name
+        type: string
+      tournament:
+        allOf:
+        - $ref: '#/definitions/domain.Tournament'
+        description: Tournament type
+      updated_at:
+        description: Record last update timestamp
+        type: string
+      winner:
+        description: Winner identifier ('A', 'B', or empty)
+        type: string
+    type: object
+  match.SetResultRequest:
+    properties:
+      score_a:
+        minimum: 0
+        type: integer
+      score_b:
+        minimum: 0
+        type: integer
+      winner:
+        enum:
+        - A
+        - B
+        - ""
+        type: string
+    type: object
+  match.Tournament:
+    enum:
+    - SPRING
+    - SUMMER
+    - WORLDS
+    - SPRING
+    - SUMMER
+    - WORLDS
+    type: string
+    x-enum-comments:
+      TournamentSpring: Spring season tournament
+      TournamentSummer: Summer season tournament
+      TournamentWorlds: World championship tournament
+    x-enum-descriptions:
+    - Spring season tournament
+    - Summer season tournament
+    - World championship tournament
+    x-enum-varnames:
+    - TournamentSpring
+    - TournamentSummer
+    - TournamentWorlds
+  match.UpdateMatchRequest:
+    properties:
+      start_time:
+        type: string
+      team_a:
+        maxLength: 100
+        type: string
+      team_b:
+        maxLength: 100
+        type: string
+      tournament:
+        $ref: '#/definitions/match.Tournament'
+    type: object
+  match.Winner:
+    enum:
+    - A
+    - B
+    - DRAW
+    - A
+    - B
+    - DRAW
+    type: string
+    x-enum-comments:
+      WinnerA: Team A won the match
+      WinnerB: Team B won the match
+      WinnerDraw: Match ended in a draw
+    x-enum-descriptions:
+    - Team A won the match
+    - Team B won the match
+    - Match ended in a draw
+    x-enum-varnames:
+    - WinnerA
+    - WinnerB
+    - WinnerDraw
+  prediction.CreatePredictionRequest:
+    properties:
+      match_id:
+        type: integer
+      predicted_score_a:
+        minimum: 0
+        type: integer
+      predicted_score_b:
+        minimum: 0
+        type: integer
+      predicted_winner:
+        allOf:
+        - $ref: '#/definitions/match.Winner'
+        enum:
+        - A
+        - B
+        - DRAW
+    required:
+    - match_id
+    - predicted_winner
+    type: object
+  prediction.CreateScoringRuleRequest:
+    properties:
+      correct_team_correct_score:
+        minimum: 0
+        type: integer
+      correct_team_wrong_score:
+        minimum: 0
+        type: integer
+      description:
+        maxLength: 500
+        type: string
+      name:
+        maxLength: 100
+        type: string
+      wrong_team_correct_score:
+        minimum: 0
+        type: integer
+      wrong_team_wrong_score:
+        minimum: 0
+        type: integer
+    required:
+    - name
+    type: object
+  prediction.Prediction:
+    properties:
+      created_at:
+        type: string
+      earned_points:
+        type: integer
+      id:
+        type: integer
+      is_correct:
+        type: boolean
+      is_featured:
+        type: boolean
+      match:
+        $ref: '#/definitions/match.Match'
+      match_id:
+        type: integer
+      modification_count:
+        type: integer
+      predicted_score_a:
+        type: integer
+      predicted_score_b:
+        type: integer
+      predicted_winner:
+        type: string
+      updated_at:
+        type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/user.User'
+        description: 关联关系
+      user_id:
+        type: integer
+      vote_count:
+        type: integer
+      votes:
+        items:
+          $ref: '#/definitions/prediction.Vote'
+        type: array
+    type: object
+  prediction.PredictionWithVotes:
+    properties:
+      created_at:
+        type: string
+      earned_points:
+        type: integer
+      has_user_voted:
+        type: boolean
+      id:
+        type: integer
+      is_correct:
+        type: boolean
+      is_featured:
+        type: boolean
+      match:
+        $ref: '#/definitions/match.Match'
+      match_id:
+        type: integer
+      modification_count:
+        type: integer
+      predicted_score_a:
+        type: integer
+      predicted_score_b:
+        type: integer
+      predicted_winner:
+        type: string
+      updated_at:
+        type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/user.User'
+        description: 关联关系
+      user_id:
+        type: integer
+      vote_count:
+        type: integer
+      votes:
+        items:
+          $ref: '#/definitions/prediction.Vote'
+        type: array
+    type: object
+  prediction.ScoringRule:
+    properties:
+      correct_team_correct_score:
+        description: 预测正确队伍和比分
+        type: integer
+      correct_team_wrong_score:
+        description: 预测正确队伍错误比分
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+      updated_at:
+        type: string
+      wrong_team_correct_score:
+        description: 预测错误队伍正确比分
+        type: integer
+      wrong_team_wrong_score:
+        description: 预测错误队伍错误比分
+        type: integer
+    type: object
+  prediction.UpdatePredictionRequest:
+    properties:
+      predicted_score_a:
+        minimum: 0
+        type: integer
+      predicted_score_b:
+        minimum: 0
+        type: integer
+      predicted_winner:
+        allOf:
+        - $ref: '#/definitions/match.Winner'
+        enum:
+        - A
+        - B
+        - DRAW
+    required:
+    - predicted_winner
+    type: object
+  prediction.UpdateScoringRuleRequest:
+    properties:
+      correct_team_correct_score:
+        minimum: 0
+        type: integer
+      correct_team_wrong_score:
+        minimum: 0
+        type: integer
+      description:
+        maxLength: 500
+        type: string
+      is_active:
+        type: boolean
+      name:
+        maxLength: 100
+        type: string
+      wrong_team_correct_score:
+        minimum: 0
+        type: integer
+      wrong_team_wrong_score:
+        minimum: 0
+        type: integer
+    type: object
+  prediction.Vote:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      prediction:
+        $ref: '#/definitions/prediction.Prediction'
+      prediction_id:
+        type: integer
+      updated_at:
+        type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/user.User'
+        description: 关联关系
+      user_id:
+        type: integer
+    type: object
+  replay.ReplayResult:
+    properties:
+      duration:
+        description: Duration in nanoseconds
+        example: 1500000000
+        type: integer
+      errors:
+        items:
+          type: string
+        type: array
+      failed_events:
+        type: integer
+      processed_events:
+        type: integer
+      total_events:
+        type: integer
+    type: object
+  response.ErrorInfo:
+    properties:
+      code:
+        description: HTTP status code
+        example: 400
+        type: integer
+      details:
+        description: Additional error context
+        example: Validation failed
+        type: string
+      message:
+        description: Primary error message
+        example: Bad request
+        type: string
+    type: object
+  response.Response:
+    properties:
+      data:
+        description: Response payload (success only)
+      error:
+        allOf:
+        - $ref: '#/definitions/response.ErrorInfo'
+        description: Error details (failure only)
+      message:
+        description: Human-readable message
+        example: Operation successful
+        type: string
+      success:
+        description: Operation success status
+        example: true
+        type: boolean
+    type: object
+  scoring.MatchPointsCalculation:
+    properties:
+      match_id:
+        type: integer
+      processed_at:
+        type: string
+      results:
+        items:
+          $ref: '#/definitions/scoring.PointsCalculationResult'
+        type: array
+      total_points:
+        type: integer
+    type: object
+  scoring.PointsCalculationResult:
+    properties:
+      is_correct:
+        type: boolean
+      match_id:
+        type: integer
+      points:
+        type: integer
+      prediction_id:
+        type: integer
+      reason:
+        description: 积分获得原因
+        type: string
+      user_id:
+        type: integer
+    type: object
+  scoring.PointsUpdateEvent:
+    properties:
+      match_id:
+        type: integer
+      new_points:
+        type: integer
+      old_points:
+        type: integer
+      points_change:
+        type: integer
+      prediction_id:
+        type: integer
+      timestamp:
+        type: string
+      tournament:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  services.Alert:
+    properties:
+      level:
+        type: string
+      message:
+        type: string
+      resolved:
+        type: boolean
+      timestamp:
+        type: string
+    type: object
+  services.CacheMetrics:
+    properties:
+      last_check:
+        type: string
+      leaderboard_stats:
+        $ref: '#/definitions/services.CacheStats'
+      redis_stats: {}
+      system_health:
+        $ref: '#/definitions/services.SystemHealth'
+    type: object
+  services.CacheReport:
+    properties:
+      alerts:
+        items:
+          $ref: '#/definitions/services.Alert'
+        type: array
+      generated_at:
+        type: string
+      hourly_stats:
+        items:
+          $ref: '#/definitions/services.HourlyStats'
+        type: array
+      recommendations:
+        items:
+          type: string
+        type: array
+      summary:
+        $ref: '#/definitions/services.CacheMetrics'
+    type: object
+  services.CacheStats:
+    properties:
+      cache_hits:
+        type: integer
+      cache_misses:
+        type: integer
+      hit_rate:
+        type: number
+      last_updated:
+        type: string
+      total_requests:
+        type: integer
+    type: object
+  services.HourlyStats:
+    properties:
+      avg_response_ms:
+        type: number
+      hit_rate:
+        type: number
+      hits:
+        type: integer
+      hour:
+        type: string
+      misses:
+        type: integer
+      requests:
+        type: integer
+    type: object
+  services.PointsCalculationTask:
+    properties:
+      created_at:
+        type: string
+      error:
+        type: string
+      id:
+        type: string
+      match_id:
+        type: integer
+      rule_id:
+        type: integer
+      status:
+        description: pending, processing, completed, failed
+        type: string
+    type: object
+  services.SystemHealth:
+    properties:
+      connection_count:
+        type: integer
+      hit_rate_healthy:
+        type: boolean
+      memory_usage_mb:
+        type: number
+      redis_connected:
+        type: boolean
+      response_time_ms:
+        type: number
+    type: object
+  user.User:
+    properties:
+      avatar:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      last_password_change:
+        type: string
+      nickname:
+        type: string
+      points:
+        type: integer
+      role:
+        $ref: '#/definitions/user.UserRole'
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  user.UserRole:
+    enum:
+    - user
+    - admin
+    type: string
+    x-enum-varnames:
+    - UserRoleUser
+    - UserRoleAdmin
+externalDocs:
+  description: OpenAPI 规范
+  url: https://swagger.io/resources/open-api/
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support Team
+    url: http://www.swagger.io/support
+  description: "基于 Go + MySQL + Redis 的高性能预测系统后端 API，支持体育比赛预测、用户投票、排行榜和实时更新功能\n\n##
+    功能特性\n- \U0001F3C6 体育比赛预测系统\n- \U0001F465 用户注册和认证\n- \U0001F5F3️ 预测投票功能\n- \U0001F4CA
+    实时排行榜\n- ⚡ WebSocket 实时通信\n- \U0001F680 高性能缓存策略\n\n## 技术栈\n- **后端**: Go + Gin
+    + GORM\n- **数据库**: MySQL 8.0\n- **缓存**: Redis 6.0\n- **认证**: JWT\n\n## API 版本管理\n当前版本:
+    v1.0，支持向后兼容"
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: 预测系统 API
+  version: "1.0"
+paths:
+  /api/v1/admin/cache/batch-invalidate:
+    post:
+      consumes:
+      - application/json
+      description: 批量使多个锦标赛的排行榜缓存失效
+      parameters:
+      - description: 批量失效请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.BatchInvalidateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 批量使缓存失效
+      tags:
+      - 缓存管理
+  /api/v1/admin/cache/hit-rate:
+    get:
+      consumes:
+      - application/json
+      description: 检查当前缓存命中率是否达到阈值
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handlers.HitRateCheckResponse'
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 检查命中率
+      tags:
+      - 缓存管理
+  /api/v1/admin/cache/invalidate-points:
+    post:
+      consumes:
+      - application/json
+      description: 当用户积分更新时使相关排行榜缓存失效
+      parameters:
+      - description: 用户ID
+        in: query
+        name: user_id
+        required: true
+        type: integer
+      - description: 锦标赛名称
+        in: query
+        name: tournament
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 积分更新时使缓存失效
+      tags:
+      - 缓存管理
+  /api/v1/admin/cache/leaderboard/invalidate:
+    post:
+      consumes:
+      - application/json
+      description: 手动使指定锦标赛的排行榜缓存失效
+      parameters:
+      - description: 锦标赛名称
+        in: query
+        name: tournament
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 使排行榜缓存失效
+      tags:
+      - 缓存管理
+  /api/v1/admin/cache/leaderboard/refresh:
+    post:
+      consumes:
+      - application/json
+      description: 手动刷新指定锦标赛的排行榜缓存
+      parameters:
+      - description: 锦标赛名称
+        in: query
+        name: tournament
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 刷新排行榜缓存
+      tags:
+      - 缓存管理
+  /api/v1/admin/cache/metrics:
+    get:
+      consumes:
+      - application/json
+      description: 获取包括Redis状态、系统健康等详细缓存指标
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/services.CacheMetrics'
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取详细缓存指标
+      tags:
+      - 缓存管理
+  /api/v1/admin/cache/prewarm:
+    post:
+      consumes:
+      - application/json
+      description: 预热所有锦标赛的排行榜缓存
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 预热缓存
+      tags:
+      - 缓存管理
+  /api/v1/admin/cache/report:
+    get:
+      consumes:
+      - application/json
+      description: 获取包括历史统计、告警、优化建议的详细缓存报告
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/services.CacheReport'
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取缓存详细报告
+      tags:
+      - 缓存管理
+  /api/v1/admin/cache/stats:
+    get:
+      consumes:
+      - application/json
+      description: 获取排行榜缓存的统计信息，包括命中率、请求数等
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/services.CacheStats'
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取缓存统计信息
+      tags:
+      - 缓存管理
+  /api/v1/admin/matches/{match_id}/recalculate-points:
+    post:
+      consumes:
+      - application/json
+      description: 管理员使用指定积分规则重新计算某场比赛的所有预测积分
+      parameters:
+      - description: 比赛ID
+        in: path
+        name: match_id
+        required: true
+        type: integer
+      - description: 积分规则ID（不指定则使用激活规则）
+        in: query
+        name: rule_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 使用指定规则重新计算比赛积分
+      tags:
+      - 积分规则
+  /api/v1/admin/points/calculate:
+    post:
+      consumes:
+      - application/json
+      description: 为指定比赛手动触发异步积分计算
+      parameters:
+      - description: 触发请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.TriggerPointsCalculationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handlers.TriggerPointsCalculationResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 手动触发积分计算
+      tags:
+      - 积分管理
+  /api/v1/admin/points/calculate/batch:
+    post:
+      consumes:
+      - application/json
+      description: 为多个比赛批量触发异步积分计算
+      parameters:
+      - description: 批量触发请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.BatchTriggerRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handlers.BatchTriggerResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 批量触发积分计算
+      tags:
+      - 积分管理
+  /api/v1/admin/points/queue/status:
+    get:
+      description: 获取积分计算任务队列的整体状态信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+              type: object
+      summary: 获取积分计算队列状态
+      tags:
+      - 积分管理
+  /api/v1/admin/points/tasks/{task_id}:
+    get:
+      description: 根据任务ID获取积分计算任务的状态
+      parameters:
+      - description: 任务ID
+        in: path
+        name: task_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/services.PointsCalculationTask'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取积分计算任务状态
+      tags:
+      - 积分管理
+  /api/v1/admin/scoring-rules:
+    post:
+      consumes:
+      - application/json
+      description: 管理员创建新的积分规则
+      parameters:
+      - description: 创建积分规则请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/prediction.CreateScoringRuleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/prediction.ScoringRule'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 创建积分规则
+      tags:
+      - 积分规则
+  /api/v1/admin/scoring-rules/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 管理员删除积分规则（不能删除激活的规则）
+      parameters:
+      - description: 积分规则ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 删除积分规则
+      tags:
+      - 积分规则
+    put:
+      consumes:
+      - application/json
+      description: 管理员更新积分规则信息
+      parameters:
+      - description: 积分规则ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新积分规则请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/prediction.UpdateScoringRuleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/prediction.ScoringRule'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 更新积分规则
+      tags:
+      - 积分规则
+  /api/v1/admin/scoring-rules/{id}/activate:
+    post:
+      consumes:
+      - application/json
+      description: 管理员设置当前使用的积分规则
+      parameters:
+      - description: 积分规则ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 设置激活的积分规则
+      tags:
+      - 积分规则
+  /api/v1/events/metrics:
+    get:
+      consumes:
+      - application/json
+      description: 获取事件处理指标数据
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取事件指标
+      tags:
+      - events
+  /api/v1/events/replay:
+    post:
+      consumes:
+      - application/json
+      description: 重放指定条件的历史事件
+      parameters:
+      - description: 重放请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.ReplayEventsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/replay.ReplayResult'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 重放事件
+      tags:
+      - events
+  /api/v1/events/replay-failed:
+    post:
+      consumes:
+      - application/json
+      description: 重放处理失败的事件
+      parameters:
+      - default: 100
+        description: 限制数量
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/replay.ReplayResult'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 重放失败的事件
+      tags:
+      - events
+  /api/v1/events/replay-status:
+    get:
+      consumes:
+      - application/json
+      description: 获取事件重放系统的状态信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取重放状态
+      tags:
+      - events
+  /api/v1/events/statistics:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定类型和时间段的统计数据
+      parameters:
+      - description: 统计类型
+        enum:
+        - registrations
+        - logins
+        - predictions
+        - votes
+        - errors
+        in: query
+        name: type
+        required: true
+        type: string
+      - description: 时间段
+        enum:
+        - daily
+        - weekly
+        - monthly
+        in: query
+        name: period
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取统计数据
+      tags:
+      - events
+  /api/v1/events/system-metrics:
+    get:
+      consumes:
+      - application/json
+      description: 获取系统级别的指标数据
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取系统指标
+      tags:
+      - events
+  /api/v1/events/test:
+    post:
+      consumes:
+      - application/json
+      description: 发布一个测试事件用于调试和测试
+      parameters:
+      - description: 测试事件请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.PublishTestEventRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 发布测试事件
+      tags:
+      - events
+  /api/v1/leaderboard:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定锦标赛的排行榜
+      parameters:
+      - default: GLOBAL
+        description: 锦标赛类型
+        enum:
+        - SPRING
+        - SUMMER
+        - GLOBAL
+        in: query
+        name: tournament
+        type: string
+      - default: 10
+        description: 返回数量限制
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/leaderboard.LeaderboardEntry'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取排行榜
+      tags:
+      - leaderboard
+  /api/v1/leaderboard/matches/{match_id}/calculate-points:
+    post:
+      consumes:
+      - application/json
+      description: 计算指定比赛结束后的所有预测积分
+      parameters:
+      - description: 比赛ID
+        in: path
+        name: match_id
+        required: true
+        type: integer
+      - description: 计算请求
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/handlers.CalculateMatchPointsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/scoring.MatchPointsCalculation'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 计算比赛积分
+      tags:
+      - leaderboard
+  /api/v1/leaderboard/ranks/{rank}/around:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定排名周围的用户列表
+      parameters:
+      - description: 排名
+        in: path
+        name: rank
+        required: true
+        type: integer
+      - default: GLOBAL
+        description: 锦标赛类型
+        enum:
+        - SPRING
+        - SUMMER
+        - GLOBAL
+        in: query
+        name: tournament
+        type: string
+      - default: 5
+        description: 范围半径
+        in: query
+        maximum: 20
+        minimum: 1
+        name: radius
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/leaderboard.LeaderboardEntry'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取排名周围的用户
+      tags:
+      - leaderboard
+  /api/v1/leaderboard/refresh:
+    post:
+      consumes:
+      - application/json
+      description: 手动刷新指定锦标赛的排行榜缓存
+      parameters:
+      - default: GLOBAL
+        description: 锦标赛类型
+        enum:
+        - SPRING
+        - SUMMER
+        - GLOBAL
+        in: query
+        name: tournament
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 刷新排行榜缓存
+      tags:
+      - leaderboard
+  /api/v1/leaderboard/stats:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定锦标赛的排行榜统计信息
+      parameters:
+      - default: GLOBAL
+        description: 锦标赛类型
+        enum:
+        - SPRING
+        - SUMMER
+        - GLOBAL
+        in: query
+        name: tournament
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/leaderboard.LeaderboardStats'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取排行榜统计
+      tags:
+      - leaderboard
+  /api/v1/leaderboard/users/{user_id}/points-history:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定用户的积分变化历史
+      parameters:
+      - description: 用户ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: 锦标赛类型
+        enum:
+        - SPRING
+        - SUMMER
+        - GLOBAL
+        in: query
+        name: tournament
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/scoring.PointsUpdateEvent'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取用户积分历史
+      tags:
+      - leaderboard
+  /api/v1/leaderboard/users/{user_id}/rank:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定用户在指定锦标赛中的排名信息
+      parameters:
+      - description: 用户ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - default: GLOBAL
+        description: 锦标赛类型
+        enum:
+        - SPRING
+        - SUMMER
+        - GLOBAL
+        in: query
+        name: tournament
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/leaderboard.UserRankInfo'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取用户排名
+      tags:
+      - leaderboard
+  /api/v1/matches:
+    get:
+      description: 获取比赛列表，支持过滤和分页
+      parameters:
+      - description: 赛事类型
+        in: query
+        name: tournament
+        type: string
+      - description: 比赛状态
+        in: query
+        name: status
+        type: string
+      - description: 开始日期
+        in: query
+        name: start_date
+        type: string
+      - description: 结束日期
+        in: query
+        name: end_date
+        type: string
+      - description: 限制数量
+        in: query
+        name: limit
+        type: integer
+      - description: 偏移量
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/match.Match'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取比赛列表
+      tags:
+      - matches
+    post:
+      consumes:
+      - application/json
+      description: 创建新的比赛
+      parameters:
+      - description: 比赛信息
+        in: body
+        name: match
+        required: true
+        schema:
+          $ref: '#/definitions/match.CreateMatchRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/match.Match'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 创建比赛
+      tags:
+      - matches
+  /api/v1/matches/{id}:
+    get:
+      description: 根据ID获取比赛详情
+      parameters:
+      - description: 比赛ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/match.Match'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取比赛详情
+      tags:
+      - matches
+    put:
+      consumes:
+      - application/json
+      description: 更新比赛信息
+      parameters:
+      - description: 比赛ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新信息
+        in: body
+        name: match
+        required: true
+        schema:
+          $ref: '#/definitions/match.UpdateMatchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/match.Match'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 更新比赛信息
+      tags:
+      - matches
+  /api/v1/matches/{id}/cancel:
+    post:
+      description: 取消比赛
+      parameters:
+      - description: 比赛ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 取消比赛
+      tags:
+      - matches
+  /api/v1/matches/{id}/result:
+    post:
+      consumes:
+      - application/json
+      description: 设置比赛结果并结束比赛
+      parameters:
+      - description: 比赛ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 比赛结果
+        in: body
+        name: result
+        required: true
+        schema:
+          $ref: '#/definitions/match.SetResultRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 设置比赛结果
+      tags:
+      - matches
+  /api/v1/matches/{id}/start:
+    post:
+      description: 将比赛状态设置为进行中
+      parameters:
+      - description: 比赛ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 开始比赛
+      tags:
+      - matches
+  /api/v1/matches/finished:
+    get:
+      description: 获取已结束的比赛列表
+      parameters:
+      - description: 限制数量
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/match.Match'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取已结束的比赛
+      tags:
+      - matches
+  /api/v1/matches/live:
+    get:
+      description: 获取正在进行的比赛列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/match.Match'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取正在进行的比赛
+      tags:
+      - matches
+  /api/v1/matches/upcoming:
+    get:
+      description: 获取即将开始的比赛列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/match.Match'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取即将开始的比赛
+      tags:
+      - matches
+  /api/v1/predictions:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定比赛的所有预测
+      parameters:
+      - description: 比赛ID
+        in: query
+        name: match_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/prediction.PredictionWithVotes'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取比赛预测列表
+      tags:
+      - predictions
+    post:
+      consumes:
+      - application/json
+      description: 为指定比赛创建预测
+      parameters:
+      - description: 创建预测请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/prediction.CreatePredictionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/prediction.Prediction'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建预测
+      tags:
+      - predictions
+  /api/v1/predictions/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定预测的详细信息
+      parameters:
+      - description: 预测ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/prediction.Prediction'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取预测详情
+      tags:
+      - predictions
+    put:
+      consumes:
+      - application/json
+      description: 更新指定的预测
+      parameters:
+      - description: 预测ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新预测请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/prediction.UpdatePredictionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/prediction.Prediction'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新预测
+      tags:
+      - predictions
+  /api/v1/predictions/{id}/vote:
+    delete:
+      consumes:
+      - application/json
+      description: 取消对指定预测的投票
+      parameters:
+      - description: 预测ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 取消投票
+      tags:
+      - predictions
+    post:
+      consumes:
+      - application/json
+      description: 为指定预测投票
+      parameters:
+      - description: 预测ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 投票支持预测
+      tags:
+      - predictions
+  /api/v1/predictions/featured:
+    get:
+      consumes:
+      - application/json
+      description: 获取系统精选的预测列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/prediction.PredictionWithVotes'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取精选预测
+      tags:
+      - predictions
+  /api/v1/predictions/my:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前用户的所有预测
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/prediction.Prediction'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取用户预测列表
+      tags:
+      - predictions
+  /api/v1/scoring-rules:
+    get:
+      consumes:
+      - application/json
+      description: 获取系统中所有的积分规则列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/prediction.ScoringRule'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取所有积分规则
+      tags:
+      - 积分规则
+  /api/v1/scoring-rules/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定ID的积分规则详情
+      parameters:
+      - description: 积分规则ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/prediction.ScoringRule'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取积分规则详情
+      tags:
+      - 积分规则
+  /api/v1/scoring-rules/active:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前系统使用的积分规则
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/prediction.ScoringRule'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取当前激活的积分规则
+      tags:
+      - 积分规则
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: 用户登录获取访问令牌
+      parameters:
+      - description: 登录信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 登录成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handlers.LoginResponse'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 用户名或密码错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "423":
+          description: 账户被锁定
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 用户登录
+      tags:
+      - 认证
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: 用户登出（客户端应删除本地令牌）
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 登出成功
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 用户登出
+      tags:
+      - 认证
+  /auth/profile:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前登录用户的资料信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handlers.RegisterResponse'
+              type: object
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 用户不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取用户资料
+      tags:
+      - 用户
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: 使用刷新令牌获取新的访问令牌
+      parameters:
+      - description: 刷新令牌
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 刷新成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handlers.LoginResponse'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 刷新令牌无效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 刷新访问令牌
+      tags:
+      - 认证
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: 创建新用户账户
+      parameters:
+      - description: 注册信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 注册成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handlers.RegisterResponse'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "409":
+          description: 用户名或邮箱已存在
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 用户注册
+      tags:
+      - 认证
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: 输入 "Bearer " + JWT令牌进行身份验证
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
