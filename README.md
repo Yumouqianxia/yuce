@@ -10,7 +10,7 @@
 - 📱 **响应式设计**: 支持 PC 和移动端
 - ⚡ **高性能**: Go 后端、Redis 缓存
 - 🛡️ **健康检查**: 完整的监控和故障恢复
-- � **排行载榜系统**: 实时排名、统计分析
+- 📊 **排行系统**: 实时排名、统计分析
 
 ## 🚀 快速开始
 
@@ -31,29 +31,28 @@ stop.bat
 ### 手动启动
 
 ```cmd
-# 启动所有服务（包括数据库）
-docker-compose -f docker-compose.hub.yml --profile local up -d
+# 开发环境（含本地 MySQL/Redis）
+docker compose -f docker-compose.dev.yml --profile local up -d
 
-# 仅启动应用服务（不包括数据库）
-docker-compose -f docker-compose.hub.yml up -d backend frontend
+# 如果已有外部 DB/Redis，仅启动应用（Vite/Go 热重载）
+docker compose -f docker-compose.app-only.yml up -d
 
 # 查看服务状态
 docker ps
 
 # 查看日志
-docker-compose -f docker-compose.hub.yml logs -f
+docker compose -f docker-compose.dev.yml logs -f
 
 # 停止服务
-docker-compose -f docker-compose.hub.yml down
+docker compose -f docker-compose.dev.yml down
 ```
 
 ### 配置文件说明
 
-项目使用 `docker-compose.hub.yml` 作为生产环境配置文件：
-
-- **mysql/redis**: 使用 `--profile local` 启动，适合本地开发
-- **backend/frontend**: 默认启动，适合生产部署
-- **adminer**: 数据库管理工具，使用 `--profile local` 启动
+常用编排：
+- `docker-compose.dev.yml`：开发/联调（默认端口：前端 5408，后端 8080，MySQL 3306，Redis 6379）
+- `docker-compose.app-only.yml`：仅应用，连接外部 DB/Redis，Vite 5173，Go 8080/8081
+- `docker-compose.yml`：生产化构建（前端 5408，后端 1874/8081，含持久卷）
 
 ### 环境变量配置（可选）
 
@@ -336,9 +335,7 @@ docker logs yuce-backend --tail 100
 
 ## 📞 技术支持
 
-- 📧 邮箱: support@example.com
-- 💬 QQ 群: 123456789
-- 📱 微信群: 扫码加入
+- 📧 邮箱: jinchen040520@gmail.com
 
 ---
 
